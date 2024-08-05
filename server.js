@@ -1,5 +1,6 @@
 // server.js
 const express = require('express');
+
 const app = express();
 const routes = require('./routes/index');
 
@@ -14,7 +15,7 @@ app.use('/', routes);
 
 // Start server
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
 
 module.exports = app;
