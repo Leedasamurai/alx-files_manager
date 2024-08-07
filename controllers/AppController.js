@@ -1,39 +1,22 @@
-const redisClient = require('../utils/redis');
-const dbClient = require('../utils/db');
+import redisClient from '../utils/redis';
+import dbClient from '../utils/db';
 
-const getStatus = async (req, res) => {
+export async function getStatus(req, res) {
   try {
-    // Check Redis
-    redisClient.ping((err, response) => {
-      if (err || response !== 'PONG') {
-        return res.status(500).json({ redis: false, db: true });
-      }
-
-      // Check MongoDB
-      dbClient.db.admin().ping({}, (err, result) => {
-        if (err || result !== 'ok') {
-          return res.status(500).json({ redis: true, db: false });
-        }
-
-        res.status(200).json({ redis: true, db: true });
-      });
-    });
+    const redisAlive = redisClient.isAlive();
+    const dbAlive = dbClient.isAlive();
+    res.status(200).json({ redis: redisAlive, db: dbAlive });
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: error.message });
   }
-};
+}
 
-const getStats = async (req, res) => {
+export async function getStats(req, res) {
   try {
-    const usersCount = await dbClient.db.collection('users').countDocuments();
-    const filesCount = await dbClient.db.collection('files').countDocuments();
+    const usersCount = await dbClient.nbUsers();
+    const filesCount = await dbClient.nbFiles();
     res.status(200).json({ users: usersCount, files: filesCount });
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: error.message });
   }
-};
-
-module.exports = {
-  getStatus,
-  getStats,
-};
+}

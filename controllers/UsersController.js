@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 const { ObjectId } = require('mongodb');
-const { db } = require('../utils/db');
+const dbClient = require('../utils/db'); // Ensure this path is correct
 const redisClient = require('../utils/redis');
 
 class UsersController {
@@ -16,7 +16,14 @@ class UsersController {
     }
 
     try {
+      const db = dbClient.db; // Access the MongoDB database
+      if (!db) {
+        console.log('Database connection is not available');
+        return res.status(500).json({ error: 'Database connection not available' });
+      }
+
       const existingUser = await db.collection('users').findOne({ email });
+
       if (existingUser) {
         return res.status(400).json({ error: 'Already exist' });
       }
@@ -25,9 +32,10 @@ class UsersController {
 
       const result = await db.collection('users').insertOne({ email, password: hashedPassword });
 
-      const newUser = result.ops[0];
+      const newUser = { _id: result.insertedId, email };
       return res.status(201).json({ id: newUser._id.toString(), email: newUser.email });
     } catch (error) {
+      console.error('Error in UsersController.postNew:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   }
@@ -46,6 +54,12 @@ class UsersController {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
+      const db = dbClient.db; // Access the MongoDB database
+      if (!db) {
+        console.log('Database connection is not available');
+        return res.status(500).json({ error: 'Database connection not available' });
+      }
+
       const user = await db.collection('users').findOne({ _id: ObjectId(userId) });
 
       if (!user) {
@@ -54,6 +68,7 @@ class UsersController {
 
       return res.status(200).json({ id: user._id.toString(), email: user.email });
     } catch (err) {
+      console.error('Error in UsersController.getMe:', err);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   }
