@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 const { ObjectId } = require('mongodb');
-const dbClient = require('../utils/db'); // Ensure this path is correct
+const dbClient = require('../utils/db');
 const redisClient = require('../utils/redis');
 
 class UsersController {
